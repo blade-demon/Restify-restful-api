@@ -1,5 +1,7 @@
 const errors = require("restify-errors");
 const Customer = require("../models/customer");
+const rjwt = require("restify-jwt-community");
+const config = require("../config");
 
 module.exports = server => {
   server.get("/customers", async (req, res, next) => {
@@ -26,55 +28,73 @@ module.exports = server => {
     }
   });
 
-  server.post("/customers", async (req, res, next) => {
-    // check for json
-    if (!req.is("application/json")) {
-      return next(new errors.InvalidContentError("Expects 'application/json"));
+  server.post(
+    "/customers",
+    rjwt({ secret: config.JWT_SECRET }),
+    async (req, res, next) => {
+      // check for json
+      if (!req.is("application/json")) {
+        return next(
+          new errors.InvalidContentError("Expects 'application/json")
+        );
+      }
+
+      const { name, email, balance } = req.body;
+
+      const customer = new Customer({
+        name,
+        email,
+        balance
+      });
+
+      try {
+        const newCustomer = await customer.save();
+        res.send(201);
+        next();
+      } catch (error) {
+        return next(new errors.InvalidContentError(error));
+      }
     }
-
-    const { name, email, balance } = req.body;
-
-    const customer = new Customer({
-      name,
-      email,
-      balance
-    });
-
-    try {
-      const newCustomer = await customer.save();
-      res.send(201);
-      next();
-    } catch (error) {
-      return next(new errors.InvalidContentError(error));
-    }
-  });
+  );
 
   // Update data
-  server.patch("/customers/:id", async (req, res, next) => {
-    // check for json
-    if (!req.is("application/json")) {
-      return next(new errors.InvalidContentError("Expects 'application/json"));
+  server.patch(
+    "/customers/:id",
+    rjwt({ secret: config.JWT_SECRET }),
+    async (req, res, next) => {
+      // check for json
+      if (!req.is("application/json")) {
+        return next(
+          new errors.InvalidContentError("Expects 'application/json")
+        );
+      }
+      try {
+        const customer = await Customer.findByIdAndUpdate(
+          { _id: req.params.id },
+          req.body
+        );
+        res.send(200);
+        next();
+      } catch (error) {
+        return next(new errors.InvalidContentError(error));
+      }
     }
-    try {
-      const customer = await Customer.findByIdAndUpdate(
-        { _id: req.params.id },
-        req.body
-      );
-      res.send(200);
-      next();
-    } catch (error) {
-      return next(new errors.InvalidContentError(error));
-    }
-  });
+  );
 
   // Delete
-  server.del("/customers/:id", async (req, res, next) => {
-    try {
-      const customer = await Customer.findOneAndRemove({ _id: req.params.id });
-      res.send(204);
-      next();
-    } catch (error) {
-      return next(new errors.InvalidContentError(error));
+  server.del(
+    "/customers/:id",
+    rjwt({ secret: config.JWT_SECRET }),
+    async (req, res, next) => {
+      try {
+        const customer = await Customer.findOneAndRemove({
+          _id: req.params.id
+        });
+        res.send(204);
+        next();
+      } catch (error) {
+        return next(new errors.InvalidContentError(error));
+      }
     }
-  });
+  );
 };

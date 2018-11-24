@@ -4,5 +4,6 @@ module.exports = {
   URL: process.env.BASE_URL || "http://localhost:3000",
   MONGODB_URI:
     process.env.MONGODB_URI ||
-    "mongodb://ziwei:xzw1989!@ds253922.mlab.com:53922/gamepoch"
+    "mongodb://ziwei:xzw1989!@ds253922.mlab.com:53922/gamepoch",
+  JWT_SECRET: "ziwei is the best"
 };
